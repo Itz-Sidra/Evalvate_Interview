@@ -12,7 +12,7 @@ from app.models.user import User
 from .audio_buffer import AudioBuffer
 from .audio_features import extract_features
 # We now import the Deepgram Engine from the STT layer
-from .stt_engine import DeepgramEngine
+from .stt_engine_elevenlabs import ElevenLabsEngine
 from .llm_engine import get_periodic_insights, get_final_summary
 from .hume_analyzer import analyze_prosody, compute_speech_metrics
 
@@ -109,10 +109,10 @@ async def voice_stream(websocket: WebSocket):
         except Exception:
             pass
 
-    deepgram = DeepgramEngine(on_word=on_word_received)
+    deepgram = ElevenLabsEngine(on_word=on_word_received)
     stt_ready = await deepgram.connect()
     if not stt_ready:
-        detail = deepgram.last_error or "Deepgram STT connection failed"
+        detail = deepgram.last_error or "ElevenLabs STT connection failed"
         logger.warning("STT unavailable for user %s: %s", user.id, detail)
         await safe_send({
             "type": "stt_unavailable",
