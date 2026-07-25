@@ -109,7 +109,10 @@ function toPcm16At16k(input: Float32Array, sourceRate: number): ArrayBuffer {
   return pcm.buffer;
 }
 
-export function useVoiceWebSocket(isRecording: boolean, sharedStream?: MediaStream | null) {
+export function useVoiceWebSocket(
+  isRecording: boolean,
+  sharedStream?: MediaStream | null,
+) {
   const socketRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
@@ -123,10 +126,17 @@ export function useVoiceWebSocket(isRecording: boolean, sharedStream?: MediaStre
   const [transcript, setTranscript] = useState<TranscriptWord[]>([]);
   const [insights, setInsights] = useState<VoiceOutput["semantic"][]>([]);
   const [sttError, setSttError] = useState<string | null>(null);
-  const [sttMode, setSttMode] = useState<"backend" | "browser" | "idle">("idle");
+  const [sttMode, setSttMode] = useState<"backend" | "browser" | "idle">(
+    "idle",
+  );
 
   const sendEmotionContext = useCallback(
-    (emotion: string, confidence: number, emotionBreakdown?: Record<string, number>, extraVideoMetrics?: unknown) => {
+    (
+      emotion: string,
+      confidence: number,
+      emotionBreakdown?: Record<string, number>,
+      extraVideoMetrics?: unknown,
+    ) => {
       if (socketRef.current?.readyState === WebSocket.OPEN) {
         socketRef.current.send(
           JSON.stringify({
@@ -142,21 +152,24 @@ export function useVoiceWebSocket(isRecording: boolean, sharedStream?: MediaStre
     [],
   );
 
-  const applyBrowserTranscript = useCallback((text: string, interim: boolean) => {
-    const words = text.trim().split(/\s+/).filter(Boolean);
-    if (words.length === 0) return;
-    setTranscript(
-      words.map((word, i) => ({
-        word,
-        start: i * 0.3,
-        end: (i + 1) * 0.3,
-        timestamp: formatTime(i * 0.3),
-      })),
-    );
-    if (!interim) {
-      setSttError(null);
-    }
-  }, []);
+  const applyBrowserTranscript = useCallback(
+    (text: string, interim: boolean) => {
+      const words = text.trim().split(/\s+/).filter(Boolean);
+      if (words.length === 0) return;
+      setTranscript(
+        words.map((word, i) => ({
+          word,
+          start: i * 0.3,
+          end: (i + 1) * 0.3,
+          timestamp: formatTime(i * 0.3),
+        })),
+      );
+      if (!interim) {
+        setSttError(null);
+      }
+    },
+    [],
+  );
 
   const stopBrowserRecognition = useCallback(() => {
     const recognition = recognitionRef.current;
@@ -179,7 +192,9 @@ export function useVoiceWebSocket(isRecording: boolean, sharedStream?: MediaStre
   const startBrowserRecognition = useCallback(() => {
     const Ctor = getBrowserRecognitionCtor();
     if (!Ctor) {
-      setSttError("Speech recognition unavailable. Use Chrome/Edge or type your answer.");
+      setSttError(
+        "Speech recognition unavailable. Use Chrome/Edge or type your answer.",
+      );
       return;
     }
 
@@ -247,7 +262,11 @@ export function useVoiceWebSocket(isRecording: boolean, sharedStream?: MediaStre
 
         const AudioContextClass =
           window.AudioContext ||
-          (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+          (
+            window as typeof window & {
+              webkitAudioContext: typeof AudioContext;
+            }
+          ).webkitAudioContext;
         const audioContext = new AudioContextClass();
         audioContextRef.current = audioContext;
 
@@ -268,7 +287,9 @@ export function useVoiceWebSocket(isRecording: boolean, sharedStream?: MediaStre
         };
       } catch (err) {
         console.error("Microphone access denied:", err);
-        setSttError("Microphone access denied. Allow mic permission or type your answer.");
+        setSttError(
+          "Microphone access denied. Allow mic permission or type your answer.",
+        );
         startBrowserRecognition();
       }
     },
@@ -301,97 +322,118 @@ export function useVoiceWebSocket(isRecording: boolean, sharedStream?: MediaStre
       if (socketRef.current?.readyState === WebSocket.OPEN) {
         socketRef.current.send("STOP");
       }
-      setSttMode("idle");
+      queueMicrotask(() => setSttMode("idle"));
       return;
     }
 
     backendTranscriptRef.current = false;
-    const wsUrl = `${backendWebSocketBaseUrl}/voice/stream`;
-    const ws = new WebSocket(wsUrl);
-    socketRef.current = ws;
+    const cancelled = { current: false };
+    let ws: WebSocket | null = null;
+    let browserFallbackTimer: number | undefined;
 
-    const browserFallbackTimer = window.setTimeout(() => {
-      if (!backendTranscriptRef.current && isRecording) {
-        startBrowserRecognition();
-      }
-    }, 2500);
-
-    ws.onopen = () => {
-      setSttMode("backend");
-      void startMicCapture(ws);
-    };
-
-    ws.onmessage = (event) => {
+    (async () => {
+      let token = "";
       try {
-        const data = JSON.parse(event.data);
-
-        if (data.type === "transcript_word") {
-          backendTranscriptRef.current = true;
-          useBrowserSttRef.current = false;
-          stopBrowserRecognition();
-          setSttMode("backend");
-          setTranscript((prev) => [
-            ...prev,
-            {
-              word: data.word,
-              start: data.start,
-              end: data.end,
-              timestamp: formatTime(data.start),
-            },
-          ]);
+        const res = await fetch("/api/auth/ws-token", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          token = data.token ?? "";
         }
+      } catch {
+        /* fall through, backend will reject and browser STT will kick in */
+      }
 
-        if (data.type === "transcript_interim" && typeof data.text === "string") {
-          backendTranscriptRef.current = true;
-          applyBrowserTranscript(data.text, true);
-        }
+      if (cancelled.current) return;
 
-        if (data.type === "stt_unavailable" || (data.type === "error" && data.message)) {
+      const wsUrl = `${backendWebSocketBaseUrl}/voice/stream?token=${encodeURIComponent(token)}`;
+      const socket = new WebSocket(wsUrl);
+      ws = socket;
+      socketRef.current = socket;
+
+      browserFallbackTimer = window.setTimeout(() => {
+        if (!backendTranscriptRef.current && isRecording) {
           startBrowserRecognition();
         }
+      }, 2500);
 
-        if (data.type === "periodic_insight") {
-          setMetrics((prev) => ({
-            ...prev,
-            acoustic: data.acoustic || prev.acoustic,
-            semantic: data.semantic || prev.semantic,
-          }));
-          if (data.semantic) {
-            setInsights((prev) => [...prev, data.semantic]);
+      socket.onopen = () => {
+        setSttMode("backend");
+        void startMicCapture(socket);
+      };
+
+      socket.onmessage = (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          if (data.type === "transcript_word") {
+            backendTranscriptRef.current = true;
+            useBrowserSttRef.current = false;
+            stopBrowserRecognition();
+            setSttMode("backend");
+            setTranscript((prev) => [
+              ...prev,
+              {
+                word: data.word,
+                start: data.start,
+                end: data.end,
+                timestamp: formatTime(data.start),
+              },
+            ]);
           }
+
+          if (data.type === "transcript_interim" && typeof data.text === "string") {
+            backendTranscriptRef.current = true;
+            applyBrowserTranscript(data.text, true);
+          }
+
+          if (data.type === "stt_unavailable" || (data.type === "error" && data.message)) {
+            startBrowserRecognition();
+          }
+
+          if (data.type === "periodic_insight") {
+            setMetrics((prev) => ({
+              ...prev,
+              acoustic: data.acoustic || prev.acoustic,
+              semantic: data.semantic || prev.semantic,
+            }));
+            if (data.semantic) {
+              setInsights((prev) => [...prev, data.semantic]);
+            }
+          }
+
+          if (data.type === "final_summary") {
+            setMetrics((prev) => ({
+              ...prev,
+              final_summary: data.content,
+              prosody: data.prosody ?? prev.prosody ?? null,
+            }));
+          }
+        } catch (e) {
+          console.error("Failed to parse WS data", e);
         }
+      };
 
-        if (data.type === "final_summary") {
-          setMetrics((prev) => ({
-            ...prev,
-            final_summary: data.content,
-            prosody: data.prosody ?? prev.prosody ?? null,
-          }));
-        }
-      } catch (e) {
-        console.error("Failed to parse WS data", e);
-      }
-    };
-
-    ws.onerror = () => {
-      startBrowserRecognition();
-    };
-
-    ws.onclose = (event) => {
-      window.clearTimeout(browserFallbackTimer);
-      if (event.code === 1008) {
-        setSttError("Voice session unauthorized. Try logging in again.");
-      } else if (isRecording && !backendTranscriptRef.current) {
+      socket.onerror = () => {
         startBrowserRecognition();
-      }
-    };
+      };
+
+      socket.onclose = (event: CloseEvent) => {
+        window.clearTimeout(browserFallbackTimer);
+        if (event.code === 1008) {
+          setSttError("Voice session unauthorized. Try logging in again.");
+        } else if (isRecording && !backendTranscriptRef.current) {
+          startBrowserRecognition();
+        }
+      };
+    })();
 
     return () => {
+      cancelled.current = true;
       window.clearTimeout(browserFallbackTimer);
       useBrowserSttRef.current = false;
       stopBrowserRecognition();
       stopMicCapture();
-      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+      if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
         ws.close();
       }
       if (socketRef.current === ws) {
