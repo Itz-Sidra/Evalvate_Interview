@@ -32,10 +32,10 @@ export default function SceneCurtain() {
       });
 
       tl.to(logoRef.current, { scale: 1.15, opacity: 0, ease: "power2.in" }, 0)
-        .to(scrollHintRef.current, { opacity: 0, ease: "power1.out" }, 0)
         .to(subRef.current, { opacity: 0, ease: "power1.out" }, 0)
         .to(leftRef.current, { xPercent: -100, ease: "power2.inOut" }, 0)
-        .to(rightRef.current, { xPercent: 100, ease: "power2.inOut" }, 0);
+        .to(rightRef.current, { xPercent: 100, ease: "power2.inOut" }, 0)
+        .to(sectionRef.current, { opacity: 0, ease: "power2.inOut" }, 0.5);
     }, sectionRef);
     return () => ctx.revert();
   }, []);
@@ -43,27 +43,18 @@ export default function SceneCurtain() {
   return (
     <section ref={sectionRef} className="relative h-screen w-full overflow-hidden" id="top">
       <div className="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none">
-        <div className="flex items-center gap-4 mb-6">
-          <span className="w-2 h-2 rounded-full bg-orange-500 pulse-dot" />
-          <span className="font-mono text-[11px] tracking-[0.4em] uppercase text-white/50">
-            evalvate · intelligence
-          </span>
-          <span className="w-2 h-2 rounded-full bg-orange-500 pulse-dot" />
-        </div>
+
         <h1
           ref={logoRef}
           data-testid={TID.curtainLogo}
-          className="font-display font-extrabold text-[clamp(64px,14vw,220px)] leading-none tracking-[-0.05em] text-white amber-glow"
+          className="font-display font-extrabold text-[clamp(64px,14vw,220px)] leading-none tracking-tight text-white amber-glow"
         >
           evalvate
         </h1>
         <p ref={subRef} className="mt-8 max-w-xl text-center text-white/55 font-mono text-[12px] tracking-[0.25em] uppercase">
-          ai-powered interview intelligence
+          interview preparation platform
         </p>
-        <div ref={scrollHintRef} className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 text-white/40">
-          <span className="font-mono text-[10px] tracking-[0.4em] uppercase">scroll to begin</span>
-          <div className="w-[1px] h-12 bg-gradient-to-b from-white/50 to-transparent" />
-        </div>
+
       </div>
       <div ref={leftRef} data-testid={TID.curtainLeft}
         className="absolute top-0 left-0 w-1/2 h-full z-20 bg-[#050505]"

@@ -21,8 +21,8 @@ export default function ScenePinned({
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
     const ctx = gsap.context(() => {
-      gsap.fromTo(imgRef.current, { scale: imageScale, y: "-3%" }, {
-        scale: 1, y: "3%", ease: "none",
+      gsap.fromTo(imgRef.current, { scale: imageScale, y: "-3%", opacity: 0 }, {
+        scale: 1, y: "3%", opacity: 1, ease: "none",
         scrollTrigger: { trigger: sectionRef.current, start: "top bottom", end: "bottom top", scrub: true },
       });
 
@@ -46,6 +46,7 @@ export default function ScenePinned({
           tl.to(el, { opacity: 0.18, filter: "blur(2px)", duration: 0.8, ease: "power1.in" }, i * 1.2 + 0.9);
         }
       });
+      tl.to(sectionRef.current, { opacity: 0, duration: 1, ease: "power2.inOut" }, total * 1.2);
     }, sectionRef);
     return () => ctx.revert();
   }, [imageScale, tall]);

@@ -56,16 +56,6 @@ export default function FinalCTA() {
             Start Your Interview
             <ArrowRight strokeWidth={2} className="w-4 h-4" />
           </a>
-          <button data-testid={TID.footerStartCta} className="btn-ghost" onClick={() => router.push('/api/auth/demo')}>
-            Watch the demo
-          </button>
-        </div>
-        <div className="mt-10 flex items-center justify-center gap-6 font-mono text-[10px] tracking-[0.25em] uppercase text-white/35">
-          <span>no card required</span>
-          <span className="w-1 h-1 rounded-full bg-white/20" />
-          <span>3 free sessions</span>
-          <span className="w-1 h-1 rounded-full bg-white/20" />
-          <span>full feedback</span>
         </div>
       </div>
     </section>

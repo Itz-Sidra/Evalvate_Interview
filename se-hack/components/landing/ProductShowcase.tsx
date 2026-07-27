@@ -7,60 +7,68 @@ import { Mic, AudioLines, FileText, Activity, TrendingUp, ArrowUpRight } from "l
 import { TID } from "@/constants/landingTestIds";
 
 const FEATURES = [
-  { id: TID.featureMockInterview, icon: Mic, title: "AI Mock Interviews",
-    desc: "Domain-specific simulations that adapt to your role, your level, and the questions that actually get asked.",
+  { id: TID.featureMockInterview, icon: Mic, title: "Adaptive Mock Interviews",
+    desc: "Dynamic multi-turn interviews tailored to target role descriptions, seniority levels, and realistic company archetypes.",
     span: "md:col-span-7 md:row-span-2", visual: "interview" },
-  { id: TID.featureSpeech, icon: AudioLines, title: "Speech Analysis",
-    desc: "Pace, filler words, clarity, and tone - measured to the millisecond.",
+  { id: TID.featureSpeech, icon: AudioLines, title: "Speech & Acoustic Metrics",
+    desc: "Millisecond-level analysis of vocal cadence, filler word density, pause frequency, and acoustic confidence markers.",
     span: "md:col-span-5", visual: "waveform" },
-  { id: TID.featureResume, icon: FileText, title: "Resume Analysis",
-    desc: "ATS scoring, gap detection, line-by-line rewrites.",
+  { id: TID.featureResume, icon: FileText, title: "Resume & Signal Audit",
+    desc: "Deep parsing of impact metrics, ATS score alignment, and skill gap detection relative to target job requirements.",
     span: "md:col-span-5", visual: "doc" },
-  { id: TID.featureConfidence, icon: Activity, title: "Confidence Scoring",
-    desc: "Micro-expressions, posture, vocal stability - quantified into a single trust score.",
+  { id: TID.featureConfidence, icon: Activity, title: "Multimodal Evaluation",
+    desc: "Real-time synthesis of facial emotional distribution, speech stability, and content relevance into an actionable performance index.",
     span: "md:col-span-6", visual: "score" },
-  { id: TID.featureMetrics, icon: TrendingUp, title: "Performance Improvement",
-    desc: "Track every session. See the delta. Walk in different than you came.",
+  { id: TID.featureMetrics, icon: TrendingUp, title: "Longitudinal Progress Tracking",
+    desc: "Track score trends across historical sessions to isolate weak competencies and measure improvement prior to live interviews.",
     span: "md:col-span-6", visual: "chart" },
 ];
 
 function FeatureVisual({ type }: { type: string }) {
   if (type === "waveform") {
     return (
-      <img src="/mockups/vocal_facial.png" className="absolute bottom-0 left-0 w-full h-[160px] object-cover object-top opacity-80" alt="Vocal and Facial Analysis" style={{ WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 100%)' }} />
+      <div className="absolute right-0 bottom-0 w-[85%] h-[160px] rounded-tl-xl border-t border-l border-white/10 overflow-hidden bg-black/40">
+        <img src="/mockups/vocal_facial.png" className="w-full h-full object-cover object-top opacity-70" alt="Vocal and Facial Analysis" style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }} />
+      </div>
     );
   }
   if (type === "doc") {
     return (
-      <img src="/mockups/resume_report.png" className="absolute bottom-0 left-0 w-full h-[160px] object-cover object-top opacity-80" alt="Resume Analysis" style={{ WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 100%)' }} />
+      <div className="absolute right-0 bottom-0 w-[85%] h-[180px] rounded-tl-xl border-t border-l border-white/10 overflow-hidden bg-black/40">
+        <img src="/mockups/resume_report.png" className="w-full h-full object-cover object-top opacity-70" alt="Resume Analysis" style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }} />
+      </div>
     );
   }
   if (type === "score") {
     return (
-      <img src="/mockups/confidence.png" className="absolute bottom-0 right-0 w-full h-[160px] object-cover object-top opacity-80" alt="Confidence Score" style={{ WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 100%)' }} />
+      <div className="absolute right-0 bottom-0 w-[85%] h-[160px] rounded-tl-xl border-t border-l border-white/10 overflow-hidden bg-black/40">
+        <img src="/mockups/confidence.png" className="w-full h-full object-cover object-top opacity-70" alt="Confidence Score" style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }} />
+      </div>
     );
   }
   if (type === "chart") {
     return (
-      <svg viewBox="0 0 300 100" className="absolute bottom-0 left-0 right-0 w-full h-32 opacity-90">
-        <defs>
-          <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#f97316" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d="M0,80 C40,75 60,65 90,55 C120,45 150,52 180,38 C210,25 240,20 270,12 L300,8 L300,100 L0,100 Z" fill="url(#cg)" />
-        <path d="M0,80 C40,75 60,65 90,55 C120,45 150,52 180,38 C210,25 240,20 270,12 L300,8" fill="none" stroke="#f97316" strokeWidth="1.5" />
-        {[10, 40, 70, 100, 130, 160, 190, 220, 250, 280].map((x, i) => (
-          <circle key={i} cx={x} cy={80 - i * 7} r="1.6" fill="#fff" opacity="0.5" />
-        ))}
-      </svg>
+      <div className="absolute inset-x-6 bottom-6 h-32 bg-white/[0.02] border border-white/10 rounded-xl overflow-hidden flex items-end">
+        <svg viewBox="0 0 300 100" className="w-full h-full opacity-90" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f97316" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d="M0,80 C40,75 60,65 90,55 C120,45 150,52 180,38 C210,25 240,20 270,12 L300,8 L300,100 L0,100 Z" fill="url(#cg)" />
+          <path d="M0,80 C40,75 60,65 90,55 C120,45 150,52 180,38 C210,25 240,20 270,12 L300,8" fill="none" stroke="#f97316" strokeWidth="2" />
+          {[10, 40, 70, 100, 130, 160, 190, 220, 250, 280].map((x, i) => (
+            <circle key={i} cx={x} cy={80 - i * 7} r="2" fill="#fff" opacity="0.6" />
+          ))}
+        </svg>
+      </div>
     );
   }
   // interview
   return (
-    <div className="absolute inset-0 p-6 flex flex-col justify-end">
-      <div className="rounded-xl border border-white/10 bg-black/50 backdrop-blur-xl p-5">
+    <div className="absolute inset-x-6 bottom-6">
+      <div className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-5 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
@@ -68,18 +76,18 @@ function FeatureVisual({ type }: { type: string }) {
           </div>
           <span className="font-mono text-[10px] tracking-[0.2em] text-orange-400">00:12:48</span>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex items-start gap-3">
-            <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-orange-400 pt-1">AI</span>
-            <p className="text-white/90 text-[14px] font-medium leading-snug">
+            <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-orange-400 pt-1 shrink-0">AI</span>
+            <p className="text-white/90 text-[13px] font-medium leading-relaxed">
               Walk me through a time you led a project under pressure. What was the moment you knew it would work?
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-white/40 pt-1">YOU</span>
-            <div className="flex items-end gap-[2px] h-6">
-              {Array.from({ length: 32 }).map((_, i) => (
-                <span key={i} className="w-[2px] rounded-sm bg-white/70"
+            <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-white/40 pt-1 shrink-0">YOU</span>
+            <div className="flex items-end gap-[3px] h-6">
+              {Array.from({ length: 24 }).map((_, i) => (
+                <span key={i} className="w-[3px] rounded-sm bg-white/70"
                   style={{ height: `${Math.round(8 + (Math.sin(i * 0.7) + 1) * 8)}px` }} />
               ))}
             </div>
@@ -125,27 +133,29 @@ export default function ProductShowcase() {
             <span className="text-orange-500">to succeed.</span>
           </h2>
           <p className="mt-8 text-white/55 text-[17px] max-w-xl leading-relaxed">
-            Comprehensive interview preparation tools. Built to help you succeed in any technical or behavioral interview.
+            An end-to-end evaluation suite designed to prepare candidates for high-stakes technical, behavioral, and system design interviews.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-12 auto-rows-[260px] gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-12 auto-rows-[minmax(300px,auto)] gap-5">
           {FEATURES.map((f) => {
             const Icon = f.icon;
             return (
               <div key={f.id} ref={addCard} data-testid={f.id}
-                className={`bento-card group p-7 flex flex-col justify-between ${f.span}`}>
-                <div className="flex items-start justify-between relative z-10">
-                  <div className="w-11 h-11 rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center text-orange-500">
-                    <Icon strokeWidth={1.5} className="w-5 h-5" />
+                className={`bento-card group flex flex-col justify-between ${f.span}`}>
+                <div className="relative z-20 flex flex-col gap-5 p-7 pb-12 bg-gradient-to-b from-[#0a0a0c] via-[#0a0a0c]/90 to-transparent rounded-t-[20px]">
+                  <div className="flex items-start justify-between">
+                    <div className="w-11 h-11 rounded-xl border border-white/10 bg-white/[0.04] flex items-center justify-center text-orange-500 shadow-sm">
+                      <Icon strokeWidth={1.5} className="w-5 h-5" />
+                    </div>
+                    <ArrowUpRight strokeWidth={1.5}
+                      className="w-5 h-5 text-white/30 group-hover:text-orange-500 group-hover:rotate-[12deg] transition-all duration-300" />
                   </div>
-                  <ArrowUpRight strokeWidth={1.5}
-                    className="w-5 h-5 text-white/30 group-hover:text-orange-500 group-hover:rotate-[12deg] transition-all duration-300" />
-                </div>
-                <div className="relative z-10 max-w-md">
-                  <h3 className="font-display font-bold text-[22px] md:text-[26px] text-white tracking-[-0.02em] mb-2.5">
-                    {f.title}
-                  </h3>
-                  <p className="text-[14px] text-white/55 leading-relaxed">{f.desc}</p>
+                  <div className="max-w-md">
+                    <h3 className="font-display font-bold text-[22px] md:text-[26px] text-white tracking-[-0.02em] mb-2.5">
+                      {f.title}
+                    </h3>
+                    <p className="text-[14px] text-white/55 leading-relaxed">{f.desc}</p>
+                  </div>
                 </div>
                 <FeatureVisual type={f.visual} />
               </div>

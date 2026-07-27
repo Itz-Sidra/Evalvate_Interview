@@ -12,13 +12,12 @@
   --border-mid: rgba(255, 255, 255, 0.14);
   
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  cursor: none;
   background: var(--bg-base);
   color: var(--text-primary);
   min-height: 100vh;
 }
 
-.landing-page a, .landing-page button, .landing-page [role="button"] { cursor: none; }
+
 
 .landing-page .font-display {
   font-family: 'Outfit', sans-serif;
@@ -45,26 +44,6 @@ html.lenis, html.lenis body { height: auto; }
   background: radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(0,0,0,0.85) 100%);
 }
 
-.landing-page .cursor-dot {
-  position: fixed; top: 0; left: 0; width: 8px; height: 8px;
-  background: var(--amber); border-radius: 50%; pointer-events: none;
-  z-index: 9999; transform: translate(-50%, -50%); mix-blend-mode: difference;
-  transition: width 0.25s ease, height 0.25s ease, background 0.25s ease;
-}
-
-.landing-page .cursor-ring {
-  position: fixed; top: 0; left: 0; width: 36px; height: 36px;
-  border: 1px solid rgba(245, 158, 11, 0.6); border-radius: 50%;
-  pointer-events: none; z-index: 9999; transform: translate(-50%, -50%);
-  transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s;
-}
-
-.landing-page .cursor-grow .cursor-dot { width: 0; height: 0; }
-
-.landing-page .cursor-grow .cursor-ring {
-  width: 60px; height: 60px; border-color: var(--amber);
-  background: rgba(245, 158, 11, 0.08);
-}
 
 .landing-page .amber-glow { text-shadow: 0 0 40px rgba(245, 158, 11, 0.4); }
 
@@ -79,20 +58,29 @@ html.lenis, html.lenis body { height: auto; }
 
 .landing-page .bento-card {
   position: relative;
-  background: linear-gradient(180deg, rgba(22, 22, 22, 0.9), rgba(13, 13, 13, 0.9));
-  border: 1px solid var(--border-soft); border-radius: 18px;
-  overflow: hidden; transition: border-color 0.4s ease, transform 0.4s ease;
+  background: #0a0a0c;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 
 .landing-page .bento-card::before {
-  content: ''; position: absolute; inset: -1px; border-radius: 18px; padding: 1px;
+  content: ''; position: absolute; inset: -1px; border-radius: 20px; padding: 1px;
   background: linear-gradient(135deg, transparent 30%, rgba(245, 158, 11, 0.4), transparent 70%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor; mask-composite: exclude;
   opacity: 0; transition: opacity 0.4s ease; pointer-events: none;
 }
 
-.landing-page .bento-card:hover { border-color: var(--border-mid); transform: translateY(-2px); }
+.landing-page .bento-card:hover {
+  border-color: rgba(249, 115, 22, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 30px -10px rgba(249, 115, 22, 0.15);
+}
 .landing-page .bento-card:hover::before { opacity: 1; }
 
 .landing-page .btn-primary {
@@ -120,14 +108,6 @@ html.lenis, html.lenis body { height: auto; }
 
 .landing-page .btn-ghost:hover { border-color: var(--amber); background: rgba(245, 158, 11, 0.06); }
 
-@keyframes pulse-dot {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.4); }
-}
-
-.landing-page .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
-
-@media (hover: none) and (pointer: coarse) {
-  .landing-page { cursor: auto; }
-  .landing-page .cursor-dot, .landing-page .cursor-ring { display: none; }
+.landing-page section {
+  will-change: opacity, transform;
 }

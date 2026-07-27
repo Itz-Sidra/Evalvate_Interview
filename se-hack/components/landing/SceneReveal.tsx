@@ -28,7 +28,7 @@ export default function SceneReveal() {
         },
       });
 
-      tl.fromTo(imgRef.current, { scale: 1.08, opacity: 0.4 }, { scale: 1, opacity: 1, ease: "none" }, 0);
+      tl.fromTo(imgRef.current, { scale: 1.08, opacity: 0.4 }, { scale: 1, opacity: 1, ease: "power1.out" }, 0);
       tl.fromTo(lightRef.current, { scale: 0.4, opacity: 0.25 }, { scale: 1.4, opacity: 0.95, ease: "power2.out" }, 0.1);
       tl.to(flashRef.current, { opacity: 1, ease: "power3.in" }, 0.6);
 

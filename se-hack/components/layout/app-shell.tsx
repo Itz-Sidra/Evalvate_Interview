@@ -71,8 +71,8 @@ export function AppShell({ children }: AppShellProps) {
         {/* ── Desktop Sidebar ─────────────────────────────── */}
         <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-r border-[var(--border-default)] bg-white/70 px-5 py-7 backdrop-blur-2xl lg:flex lg:flex-col">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--accent-primary)]">
-              Evalvate
+            <p className="font-display font-extrabold text-2xl tracking-tight text-[var(--text-primary)]">
+              evalvate
             </p>
             <h1 className="mt-3 text-lg font-bold text-[var(--text-primary)]">
               Interview Studio

@@ -74,9 +74,9 @@ async def connect_to_postgres() -> None:
     try:
         async with engine.connect() as conn:
             await conn.execute(__import__("sqlalchemy").text("SELECT 1"))
-        print("✓ Connected to PostgreSQL successfully!")
+        print("[OK] Connected to PostgreSQL successfully!")
     except Exception as exc:
-        print(f"✗ PostgreSQL connection failed: {exc}")
+        print(f"[FAIL] PostgreSQL connection failed: {exc}")
         raise
 
 

@@ -12,7 +12,6 @@ import SceneReveal from "@/components/landing/SceneReveal";
 import ProductShowcase from "@/components/landing/ProductShowcase";
 import FinalCTA from "@/components/landing/FinalCTA";
 
-import CustomCursor from "@/components/CustomCursor";
 import "./landing.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -55,7 +54,6 @@ export default function LandingClient() {
 
   return (
     <div className="landing-page">
-      <CustomCursor />
       <div className="grain" />
       <main className="relative bg-[#050505] text-white">
         <div className="fixed top-0 left-0 right-0 h-[2px] z-[200] bg-white/5">
