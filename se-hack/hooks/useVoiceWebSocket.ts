@@ -121,6 +121,7 @@ export function useVoiceWebSocket(
   const recognitionRef = useRef<BrowserRecognition | null>(null);
   const useBrowserSttRef = useRef(false);
   const backendTranscriptRef = useRef(false);
+  const browserFinalTextRef = useRef("");
 
   const [metrics, setMetrics] = useState<VoiceOutput>({});
   const [transcript, setTranscript] = useState<TranscriptWord[]>([]);
@@ -154,8 +155,19 @@ export function useVoiceWebSocket(
 
   const applyBrowserTranscript = useCallback(
     (text: string, interim: boolean) => {
-      const words = text.trim().split(/\s+/).filter(Boolean);
-      if (words.length === 0) return;
+      const cleaned = text.trim();
+      if (!cleaned) return;
+
+      if (!interim) {
+        browserFinalTextRef.current = `${browserFinalTextRef.current} ${cleaned}`.trim();
+        setSttError(null);
+      }
+
+      const combined = interim
+        ? `${browserFinalTextRef.current} ${cleaned}`.trim()
+        : browserFinalTextRef.current;
+
+      const words = combined.split(/\s+/).filter(Boolean);
       setTranscript(
         words.map((word, i) => ({
           word,
@@ -164,9 +176,6 @@ export function useVoiceWebSocket(
           timestamp: formatTime(i * 0.3),
         })),
       );
-      if (!interim) {
-        setSttError(null);
-      }
     },
     [],
   );
@@ -317,6 +326,7 @@ export function useVoiceWebSocket(
     if (!isRecording) {
       useBrowserSttRef.current = false;
       backendTranscriptRef.current = false;
+      browserFinalTextRef.current = "";
       stopBrowserRecognition();
       stopMicCapture();
       if (socketRef.current?.readyState === WebSocket.OPEN) {
@@ -383,7 +393,7 @@ export function useVoiceWebSocket(
 
           if (data.type === "transcript_interim" && typeof data.text === "string") {
             backendTranscriptRef.current = true;
-            applyBrowserTranscript(data.text, true);
+            // applyBrowserTranscript(data.text, true);
           }
 
           if (data.type === "stt_unavailable" || (data.type === "error" && data.message)) {
@@ -414,7 +424,9 @@ export function useVoiceWebSocket(
       };
 
       socket.onerror = () => {
-        startBrowserRecognition();
+        if (!backendTranscriptRef.current) {
+          startBrowserRecognition();
+        }
       };
 
       socket.onclose = (event: CloseEvent) => {
@@ -456,10 +468,12 @@ export function useVoiceWebSocket(
     setSttError(null);
     setSttMode("idle");
     backendTranscriptRef.current = false;
+    browserFinalTextRef.current = "";
   }, []);
 
   const clearTranscript = useCallback(() => {
     setTranscript([]);
+    browserFinalTextRef.current = "";
   }, []);
 
   const getTranscriptText = useCallback(() => {
