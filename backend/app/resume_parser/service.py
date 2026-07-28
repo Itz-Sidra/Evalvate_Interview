@@ -8,45 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.resume_parser.extractor import clean_extracted_text, extract_text_from_docx, extract_text_from_pdf
 from app.resume_parser.llm_client import analyze_resume_ats_with_llm, parse_resume_with_llm
 from app.resume_parser.repository import build_resume_document
+from app.resume_parser.validator import validate_file_metadata, validate_resume_content
+from app.resume_parser.deterministic_parser import parse_resume_deterministic, merge_parsed_results
 
 logger = logging.getLogger(__name__)
 
-MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
-ALLOWED_EXTENSIONS = {".pdf", ".docx"}
-ALLOWED_CONTENT_TYPES = {
-    "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/octet-stream",
-}
-
-
-def _validate_file(file: UploadFile, file_bytes: bytes) -> str:
-    suffix = Path(file.filename or "").suffix.lower()
-    if suffix not in ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid file type. Only PDF and DOCX are supported",
-        )
-
-    if file.content_type and file.content_type not in ALLOWED_CONTENT_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid content type. Only PDF and DOCX are supported",
-        )
-
-    if len(file_bytes) == 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Uploaded file is empty",
-        )
-
-    if len(file_bytes) > MAX_FILE_SIZE_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="File is too large. Maximum size is 5MB",
-        )
-
-    return suffix
 
 
 async def _extract_resume_text(suffix: str, file_bytes: bytes) -> str:
@@ -104,28 +70,51 @@ async def process_resume_upload(
     file_bytes = await file.read()
 
     # Step 2: Validate file extension, content type, and file size.
-    suffix = _validate_file(file, file_bytes)
+    suffix = validate_file_metadata(file.filename or "", file.content_type or "", file_bytes)
 
     # Step 3: Extract and clean text using format-specific parser.
     resume_text = await _extract_resume_text(suffix, file_bytes)
 
-    # Step 4: Send cleaned text to OpenRouter LLM and get structured JSON.
-    parsed_resume = await parse_resume_with_llm(resume_text)
+    # Step 3.5: Validate resume content
+    validate_resume_content(resume_text)
 
-    # Step 5: Generate ATS score and improvement suggestions.
+    # Step 4: Deterministic parsing
+    deterministic_resume = parse_resume_deterministic(resume_text)
+
+    # Step 4.5: Send cleaned text to LLM to fill missing ambiguous fields
+    llm_resume = await parse_resume_with_llm(resume_text)
+    
+    # Merge outputs
+    parsed_resume = merge_parsed_results(deterministic_resume, llm_resume)
+
+    # Step 4.75: Deterministic Quality Engine (Phase 4 & 7)
+    from app.resume_parser.quality_engine import run_quality_engine
+    quality_results = run_quality_engine(parsed_resume, resume_text)
+
+    # Step 5: Recruiter Simulation (Phase 8)
     ats_analysis: dict | None
     try:
-        ats_analysis = await analyze_resume_ats_with_llm(resume_text, parsed_resume)
-    except HTTPException:
-        logger.exception("Failed to generate ATS analysis. Returning parsed resume without ATS details")
+        recruiter_insights = await analyze_resume_ats_with_llm(resume_text, parsed_resume)
+        
+        # Merge quality_engine deterministic scores with recruiter LLM insights
         ats_analysis = {
-            "overall_score": None,
-            "score_breakdown": None,
+            "overall_score": quality_results["overall_score"],
+            "score_breakdown": quality_results["score_breakdown"],
+            "strengths": recruiter_insights.get("strengths", []),
+            "wording_tips": recruiter_insights.get("wording_tips", []),
+            "formatting_tips": recruiter_insights.get("formatting_tips", []),
+            "useful_insights": quality_results["deterministic_findings"] + recruiter_insights.get("useful_insights", [])
+        }
+    except HTTPException:
+        logger.exception("Failed to generate Recruiter insights. Falling back to deterministic only.")
+        ats_analysis = {
+            "overall_score": quality_results["overall_score"],
+            "score_breakdown": quality_results["score_breakdown"],
             "strengths": [],
             "wording_tips": [],
             "formatting_tips": [],
-            "useful_insights": [
-                "Resume parsed successfully, but ATS insights are temporarily unavailable."
+            "useful_insights": quality_results["deterministic_findings"] + [
+                "Resume parsed successfully, but recruiter insights are temporarily unavailable."
             ],
         }
 

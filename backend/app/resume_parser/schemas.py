@@ -55,3 +55,19 @@ class CurrentResumeResponse(BaseModel):
 class DeleteResumeResponse(BaseModel):
     message: str
     deleted_count: int
+
+class ParsedJD(BaseModel):
+    title: str | None = None
+    requirements: list[str] = Field(default_factory=list)
+    skills: list[str] = Field(default_factory=list)
+    responsibilities: list[str] = Field(default_factory=list)
+
+class JDUploadResponse(BaseModel):
+    jd_id: str
+    parsed_jd: ParsedJD
+
+class MatchResult(BaseModel):
+    matched_skills: list[str] = Field(default_factory=list)
+    missing_skills: list[str] = Field(default_factory=list)
+    match_score: int = Field(default=0, ge=0, le=100)
+    evidence: list[str] = Field(default_factory=list)

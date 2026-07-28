@@ -56,9 +56,10 @@ PARSER_SYSTEM_PROMPT = (
     "Return clean JSON only with no markdown and no extra text."
 )
 
-ATS_SYSTEM_PROMPT = (
-    "You are an expert ATS (Applicant Tracking System) resume reviewer. "
-    "Provide practical, concrete, and concise feedback from the given resume only. "
+RECRUITER_SYSTEM_PROMPT = (
+    "You are an expert technical recruiter simulating a resume review. "
+    "Do not score the resume or guess an ATS score. "
+    "Provide practical, concrete, and concise feedback based ONLY on the provided resume text. "
     "Return clean JSON only with no markdown and no extra text."
 )
 
@@ -240,7 +241,7 @@ def _build_parse_user_prompt(resume_text: str, *, repair_mode: bool) -> str:
     )
 
 
-def _build_ats_user_prompt(
+def _build_recruiter_user_prompt(
     resume_text: str,
     parsed_resume: dict[str, Any],
     *,
@@ -252,15 +253,18 @@ def _build_ats_user_prompt(
 
     return (
         f"{repair_line}\n"
-        "Analyze the resume for ATS readiness and actionable improvements using this exact JSON schema:\n"
-        f"{json.dumps(ATS_ANALYSIS_SCHEMA_TEMPLATE, indent=2)}\n"
-        "Rules:\n"
-        "1) Scores must be integers from 0 to 100.\n"
-        "2) Give concise and practical tips.\n"
-        "3) wording_tips must improve impact, clarity, and measurable outcomes in resume bullet points.\n"
-        "4) formatting_tips must focus on layout, section structure, consistency, and ATS readability.\n"
-        "5) useful_insights should include other high-value resume observations or risk areas.\n"
-        "6) Return only a JSON object with no extra commentary.\n\n"
+        "Analyze the candidate as a recruiter would. Extract:\n"
+        "1. strengths (List of key candidate strengths)\n"
+        "2. wording_tips (List of weaknesses or areas of improvement in wording/impact)\n"
+        "3. formatting_tips (Any structural issues)\n"
+        "4. useful_insights (Would you shortlist them? What would you focus on in an interview?)\n"
+        "Return this exact JSON schema:\n"
+        "{\n"
+        '  "strengths": ["string"],\n'
+        '  "wording_tips": ["string"],\n'
+        '  "formatting_tips": ["string"],\n'
+        '  "useful_insights": ["string"]\n'
+        "}\n\n"
         f"Parsed Resume JSON:\n{json.dumps(parsed_resume, indent=2)}\n\n"
         f"Resume Text:\n{resume_text}"
     )
@@ -358,8 +362,8 @@ async def analyze_resume_ats_with_llm(
 
     for attempt in range(MAX_LLM_RETRIES + 1):
         raw_output = await _call_openrouter_api(
-            system_prompt=ATS_SYSTEM_PROMPT,
-            user_prompt=_build_ats_user_prompt(
+            system_prompt=RECRUITER_SYSTEM_PROMPT,
+            user_prompt=_build_recruiter_user_prompt(
                 resume_text,
                 parsed_resume,
                 repair_mode=attempt > 0,
@@ -368,9 +372,15 @@ async def analyze_resume_ats_with_llm(
 
         try:
             parsed = json.loads(_strip_code_fences(raw_output))
-            normalized = _normalize_ats_analysis(parsed)
-            validated = ATSAnalysis.model_validate(normalized)
-            return validated.model_dump()
+            # Just extract the fields we asked for, leaving scores empty
+            return {
+                "overall_score": None,
+                "score_breakdown": None,
+                "strengths": _normalize_string_list(parsed.get("strengths")),
+                "wording_tips": _normalize_string_list(parsed.get("wording_tips")),
+                "formatting_tips": _normalize_string_list(parsed.get("formatting_tips")),
+                "useful_insights": _normalize_string_list(parsed.get("useful_insights")),
+            }
         except (json.JSONDecodeError, ValueError, ValidationError) as exc:
             parsing_error = exc
             logger.warning("Retrying OpenRouter ATS analysis due to invalid JSON. Attempt=%s", attempt + 1)
